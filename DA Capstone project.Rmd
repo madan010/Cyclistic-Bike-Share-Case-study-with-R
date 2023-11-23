@@ -1,0 +1,334 @@
+---
+title: "R Notebook: Data Analytics Capstone Project"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  word_document: default
+---
+
+# .
+
+#### Loading the required packages
+
+```{r}
+options(repos = c(CRAN = "http://cran.rstudio.com/"))
+install.packages("lubridate")
+
+
+install.packages('lubridate')
+install.packages('tidyverse')
+install.packages('janitor')
+install.packages('rmarkdown')
+install.packages('dplyr')
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(rmarkdown)
+library(dplyr)
+```
+
+#### Import the data
+
+```{r}
+jan <- read.csv('D:/R studio/tripdata/CAPSTONE/202201-divvy-tripdata.csv')
+feb <- read.csv('D:/R studio/tripdata/CAPSTONE/202202-divvy-tripdata.csv')
+mar <- read.csv('D:/R studio/tripdata/CAPSTONE/202203-divvy-tripdata.csv')
+apr <- read.csv('D:/R studio/tripdata/CAPSTONE/202204-divvy-tripdata.csv')
+may <- read.csv('D:/R studio/tripdata/CAPSTONE/202205-divvy-tripdata.csv')
+jun <- read.csv('D:/R studio/tripdata/CAPSTONE/202206-divvy-tripdata.csv')
+jul <- read.csv('D:/R studio/tripdata/CAPSTONE/202207-divvy-tripdata.csv')
+aug <- read.csv('D:/R studio/tripdata/CAPSTONE/202208-divvy-tripdata.csv')
+sep <- read.csv('D:/R studio/tripdata/CAPSTONE/202209-divvy-tripdata.csv')
+oct <- read.csv('D:/R studio/tripdata/CAPSTONE/202210-divvy-tripdata.csv')
+nov <- read.csv('D:/R studio/tripdata/CAPSTONE/202211-divvy-tripdata.csv')
+dec <- read.csv('D:/R studio/tripdata/CAPSTONE/202212-divvy-tripdata.csv')
+```
+
+#### Merge the CSV files
+
+```{r}
+trips2022 <-  bind_rows(jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec)
+```
+
+### Exploring the data
+
+```{r }
+trips2022
+```
+
+```{r}
+summary(trips2022)
+```
+
+#### Cleaning trips2022
+
+```{r}
+drop_na(trips2022)
+sum(is.na(trips2022$started_at))
+```
+
+```{r}
+colnames(trips2022)
+```
+
+##### Drop Location data, ride id, station id
+
+```{r}
+col_to_drop <-  c("ride_id","end_station_id","start_station_id","start_lat","start_lng","end_lat","end_lng" )
+trips2022[col_to_drop] <- NULL 
+colnames(trips2022)
+```
+
+```{r}
+head(trips2022$started_at)
+```
+
+#### Adding new features based on time: ride year, month, day, date
+
+```{r}
+trips2022 <- trips2022 %>% 
+  mutate(year=year(ymd_hms(started_at))) %>% 
+  mutate(month=month(ymd_hms(started_at))) %>% 
+  mutate(date=day(ymd_hms(started_at))) %>% 
+  mutate(weekday=wday(ymd_hms(started_at))) %>% 
+  mutate(time = hour(ymd_hms(started_at)))
+
+```
+
+```{r}
+trips2022
+
+```
+
+#### Creating the ride duration column
+
+```{r}
+trips2022 <- trips2022 %>% 
+  mutate(ride_length=difftime(ended_at,started_at))
+```
+
+```{r}
+trips2022
+
+```
+
+```{r}
+trips2022 <- mutate(trips2022, ride_length = as.numeric(ride_length, units = "secs"))
+
+```
+
+```{r}
+trips2022
+```
+
+```{r}
+summary(trips2022$ride_length)
+```
+
+```{r}
+trips2022 %>% 
+  filter(ride_length<=0)
+```
+
+#### As the min value above shows there are negative values in ride duration. filtering all values below 0(531 rows)
+
+```{r}
+trips2022 <- trips2022 %>% 
+  filter(ride_length > 0)
+
+```
+
+```{r}
+glimpse(trips2022)
+```
+
+## Ride Metrics for 2022 Ride duration(sec)
+
+```{r}
+ride_stats <- (summary(trips2022$ride_length))
+ride_stats
+```
+
+### Average Trip Duration by Members Type
+
+```{r}
+ggplot(trips2022, aes(x = member_casual, fill=member_casual)) +
+    geom_bar() +
+    labs(x="Casuals vs Members", y="Number Of Rides", title= "Casuals vs Members distribution")
+```
+
+#### We can see on the Casuals vs Members distribution chart,
+
+#### The graph shows that most rides are taken by members, This suggests that members are more frequent users of the service than casual users. While the exact nature of the service is unclear, it seems that membership encourages a higher level of engagement and usage.
+
+```{r}
+membertype <- trips2022 %>% 
+  group_by(member_casual) %>% 
+  summarise(average_ride_length = mean(ride_length), median_length = median(ride_length), 
+            max_ride_length = max(ride_length), min_ride_length = min(ride_length))
+membertype
+```
+
+```{r}
+ggplot(data = membertype, aes(x = member_casual, y = average_ride_length)) +
+  geom_bar(stat = "identity", fill = "skyblue")+
+  labs(x = "Member Type", y = "Average Ride Length", title = "Average Ride Length by Member Type")
+  
+```
+
+#### Casual users have the shortest average ride length. Member_casual users have a slightly longer average ride length, Member users have the longest average ride length.
+
+#### The data suggests that membership in the service is associated with longer ride lengths.This suggests that member users are more likely to take longer rides than casual users.
+
+```{r}
+monthly <- trips2022 %>% 
+  group_by(month,member_casual) %>% 
+  summarise(average_ride_length=mean(ride_length))
+
+monthly$month <- factor(monthly$month, levels = 1:12, labels = month.name)
+monthly
+
+```
+
+```{r}
+ggplot(data = monthly, aes(x = month, y = average_ride_length,fill=member_casual)) +
+  geom_col(position = "dodge")  +
+  theme(axis.text.x = element_text(angle = 90))+
+  labs(x = "Month", y = "Average Ride Length", title = "Average Ride Length by month")
+```
+
+#### As the above Bar chart shows that there is an uptick in the usage of the bikes around june. the pattern of usage is same for casual users as well.
+
+```{r}
+weekly <- trips2022 %>% 
+  group_by(weekday,member_casual) %>% 
+  summarise(average_ride_length=mean(ride_length))
+
+weekly$weekday <- factor(weekly$weekday, levels = 1:7, labels = weekdays(as.Date("2022-01-01") + 1:7))
+
+weekly
+
+```
+
+### Weekly Ridership
+
+```{r}
+ggplot(data=weekly,aes(x=weekday,y=average_ride_length,fill=member_casual))+
+  geom_col(position = "dodge")+
+  theme(axis.text.x = element_text(angle = 90))+
+  labs(x = "Weekday", y = "Average Ride Length", title = "Average Ride Length by Week")
+  
+```
+
+#### Casual users tend to take longer rides than members. This is true on both weekdays and weekends.
+
+#### This is true on both weekdays and weekends.
+
+#### This suggests that people are more likely to take longer bike rides on weekends, regardless of whether they are casual users, member_casual users, or member users
+
+```{r}
+toplocation  <- trips2022 %>% 
+  group_by(start_station_name) %>% 
+  summarise(average_ride_length=mean(ride_length))
+
+n_distinct(toplocation$start_station_name)
+
+```
+
+#### There are 1675 locations throughout the city where the riders can access the services.
+
+```{r}
+toplocation <- toplocation %>%
+  arrange(desc(average_ride_length)) %>% 
+  slice_head(n=15)
+
+toplocation
+```
+
+### Top 15 Ride Locations
+
+```{r}
+ggplot(toplocation, aes(x = reorder(start_station_name, -average_ride_length), y = average_ride_length)) +
+  geom_col(fill = "skyblue", color = "black") +
+  labs(title = "Average Ride Length by Start Station",x = "Start Station",y = "Average Ride Length") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#### Out 1675 locations, Ashland Ave & 74th St, Calumet Ave & 71st St are the most are the used stations the users have the longest average ride length at these station.
+
+#### The average ride lengths vary depending on the start station.
+
+```{r}
+trip_hr  <- trips2022 %>% 
+  group_by(time,member_casual) %>% 
+  summarise(average_ride_length=mean(ride_length))
+trip_hr
+```
+
+### Average Ride time by Hour of the day
+
+```{r}
+ggplot(data=trip_hr,aes(x=time,y=average_ride_length,fill=member_casual))+
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 90))+
+  labs(x = "time of the day", y = "Average Ride Length", title = "Average Ride Length by time")
+```
+
+#### The bar graph shows the average ride length by hour of the day for a typical week. the data suggests that the average ride length in this system varies depending on the time of day. It is Highest midnight
+
+```{r}
+trip_hr_week  <- trips2022 %>% 
+  group_by(time,weekday,member_casual) %>% 
+  summarise(average_ride_length=mean(ride_length))
+trip_hr_week
+```
+
+### Hourly Trips through out the week
+
+```{r}
+ggplot(data=trip_hr_week,aes(x=time,y=average_ride_length,fill=member_casual))+
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 90))+
+  labs(x = "time of the day", y = "Average Ride Length", title = "Daily Average Ride Length by time")+
+  facet_wrap(~ weekday)
+
+```
+
+#### the above visualization shows that the demand for bikes are constant by the members at all times throughout the week. Demand for bikes by the casual users peak post midnight. it is higher in the weekends
+
+### Trips by Rideable Type
+
+```{r}
+ride_type <- trips2022 %>%
+  group_by(rideable_type, member_casual) %>%
+  summarise(average_ride_length = mean(ride_length))
+ride_type
+
+```
+
+```{r}
+ggplot(data=ride_type,aes(x=rideable_type,y=average_ride_length,fill=member_casual))+
+  geom_col()+
+  labs(x = "Rideable Type", y = "Average Ride Length", title = "Average Ride Length by Rideable Type")
+  
+```
+
+#### From the above bar chart we can conclude that members mostly use classic bike, followed by electric bikes.Docked bikes are used only by casual users
+
+```{r}
+ride_type_monthly <- trips2022 %>%
+  group_by(rideable_type, month) %>%
+  summarise(average_ride_length = mean(ride_length))
+ride_type_monthly
+```
+
+```{r}
+ggplot(data=ride_type_monthly,aes(x=month,y=average_ride_length,fill=rideable_type))+
+  geom_col()+
+  labs(x = "Rideable Type", y = "Average Ride Length", title = "Monthly Average Ride Length by Rideable Type")
+```
+
+#### from the above visualization we can infer that there is slight uptick in the demand for electric bikes in the evening . There is a constant demand for classic bike through out the day. and docked bikes are used most around midnight
