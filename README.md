@@ -11,6 +11,10 @@ The director of marketing and your manager Lily Moreno has assigned you the firs
 > How do annual members and casual riders use Cyclistic bikes differently?
 
 
+> [!IMPORTANT]
+> Your top three recommendations based on your analysis
+
+
 I will figure this out by analysing the 12 months of cyclistic's bike usage data from  jan 2022 to dec 2022.  Check out the [`DA Capstone project.Rmd`](https://github.com/madan010/Cyclistic-Bike-Share-Case-study-with-R/blob/main/DA%20Capstone%20project.Rmd) file for my analysis. the documentation for the same is 
 The data used for the project is from jan 2022 to dec 2022. 
 
@@ -47,7 +51,12 @@ The data used for the project is from jan 2022 to dec 2022.
 <img src="https://github.com/madan010/Cyclistic-Bike-Share-Case-study-with-R/assets/151483084/f44c125b-6da1-4284-b5dc-64f6ee2b6f1f" width="400" height="350">  <img src="https://github.com/madan010/Cyclistic-Bike-Share-Case-study-with-R/assets/151483084/2d8a94ea-0fcf-44b8-8233-2f97e77f6fc1" width="450" height="350">
 
 
-
-
+# Top 3 Recommendation Based on My Analysis
+> ###  Focus on acquiring more casual riders
+- The data shows that casual riders take longer rides than members on average. This is a valuable opportunity for the business, as longer rides mean more revenue. The business can focus on acquiring more casual riders
+> ### People are more likely to ride bikes for leisure on weekends.
+- offering discounts on bike-sharing rides on weekends, the company can encourage more people to use the service
+> ### Retaining the members and acquaring more casual riders.
+-  the company could offer commuting passes to members so that they members use the services for longer, and they could offer discounts on weekend rides to attract more casual riders.
 
 
